@@ -16,7 +16,6 @@
 
 package data.task;
 
-import action.ConvertToOtherLanguages;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -25,6 +24,18 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.util.ArrayList;
+import java.util.List;
+
+import action.ConvertToOtherLanguages;
 import data.Log;
 import data.SerializeUtil;
 import data.StorageDataKey;
@@ -34,12 +45,6 @@ import language_engine.google.GoogleTranslationApi;
 import module.AndroidString;
 import module.FilterRule;
 import module.SupportedLanguages;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by Wesley Lin on 12/1/14.
@@ -83,28 +88,29 @@ public class GetTranslationTask extends Task.Backgroundable {
     public void run(ProgressIndicator indicator) {
         for (int i = 0; i < selectedLanguages.size(); i++) {
 
+            //需要翻译的目标语言
             SupportedLanguages language = selectedLanguages.get(i);
 
-            List<List<AndroidString>> filteredAndSplittedString
+            List<List<AndroidString>> filterAndSplitString
                     = splitAndroidString(filterAndroidString(androidStrings, language, override), translationEngineType);
 
-            List<AndroidString> translationResult = new ArrayList<AndroidString>();
-            for (int j = 0; j < filteredAndSplittedString.size(); j++) {
-                translationResult.addAll(getTranslationEngineResult(
-                        filteredAndSplittedString.get(j),
+            List<AndroidString> translationStrings = new ArrayList<AndroidString>();
+            for (int j = 0; j < filterAndSplitString.size(); j++) {
+                translationStrings.addAll(getTranslationEngineResult(
+                        filterAndSplitString.get(j),
                         language,
                         SupportedLanguages.English,
                         translationEngineType
                 ));
 
                 indicator.setFraction(indicatorFractionFrame * (double)(i)
-                        + indicatorFractionFrame / filteredAndSplittedString.size() * (double)(j));
+                        + indicatorFractionFrame / filterAndSplitString.size() * (double)(j));
                 indicator.setText("Translating to " + language.getLanguageEnglishDisplayName()
                         + " (" + language.getLanguageDisplayName() + ")");
             }
-
+            //需要把翻译的结果写进文件名为fileName的xml中
             String fileName = getValueResourcePath(language);
-            List<AndroidString> fileContent = getTargetAndroidStrings(androidStrings, translationResult, fileName, override);
+            List<AndroidString> fileContent = getTargetAndroidStrings(androidStrings, translationStrings, fileName, override);
 
             writeAndroidStringToLocal(myProject, fileName, fileContent);
         }
@@ -118,6 +124,11 @@ public class GetTranslationTask extends Task.Backgroundable {
         ConvertToOtherLanguages.showErrorDialog(getProject(), errorMsg);
     }
 
+    /**
+     * 获取对应语言的文件名称，例如values-en
+     * @param language
+     * @return
+     */
     private String getValueResourcePath(SupportedLanguages language) {
         String resPath = clickedFile.getPath().substring(0,
                 clickedFile.getPath().indexOf("/res/") + "/res/".length());
@@ -126,6 +137,14 @@ public class GetTranslationTask extends Task.Backgroundable {
                 + "/" + clickedFile.getName();
     }
 
+    /**
+     * 使用选择的翻译引擎,进行翻译
+     * @param needToTranslatedString
+     * @param targetLanguageCode
+     * @param sourceLanguageCode
+     * @param translationEngineType
+     * @return
+     */
     // todo: if got error message, should break the background task
     private List<AndroidString> getTranslationEngineResult(@NotNull List<AndroidString> needToTranslatedString,
                                                            @NotNull SupportedLanguages targetLanguageCode,
@@ -174,6 +193,12 @@ public class GetTranslationTask extends Task.Backgroundable {
         return translatedAndroidStrings;
     }
 
+    /**
+     * 把需要翻译的字符串列表，切分为50个一组，避免一次请求过多
+     * @param origin
+     * @param engineType 翻译引擎，不同的引擎，一组的大小可能不一样
+     * @return
+     */
     private List<List<AndroidString>> splitAndroidString(List<AndroidString> origin, TranslationEngineType engineType) {
 
         List<List<AndroidString>> splited = new ArrayList<List<AndroidString>>();
@@ -208,7 +233,6 @@ public class GetTranslationTask extends Task.Backgroundable {
                                                            boolean override) {
         List<AndroidString> result = new ArrayList<AndroidString>();
 
-
         VirtualFile targetStringFile = LocalFileSystem.getInstance().findFileByPath(
                 getValueResourcePath(language));
         List<AndroidString> targetAndroidStrings = new ArrayList<AndroidString>();
@@ -235,6 +259,7 @@ public class GetTranslationTask extends Task.Backgroundable {
 
             // override
             if (!override && !targetAndroidStrings.isEmpty()) {
+                // 已经存在的androidString，不需要重写
                 // check if there is the androidString in this file
                 // if there is, filter it
                 if (isAndroidStringListContainsKey(targetAndroidStrings, androidString.getKey())) {
@@ -281,6 +306,7 @@ public class GetTranslationTask extends Task.Backgroundable {
 
             // if override is checked, skip setting the existence value, for performance issue
             if (!override) {
+                //不重写
                 String existenceValue = getAndroidStringValueInList(existenceAndroidStrings, resultString.getKey());
                 if (existenceValue != null) {
                     resultString.setValue(existenceValue);

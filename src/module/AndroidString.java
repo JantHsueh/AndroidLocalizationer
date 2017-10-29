@@ -16,6 +16,12 @@
 
 package module;
 
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
@@ -23,12 +29,6 @@ import javax.xml.stream.events.Attribute;
 import javax.xml.stream.events.EndElement;
 import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 
 /**
  * Created by Wesley Lin on 11/29/14.
@@ -130,6 +130,11 @@ public class AndroidString {
         return result;
     }
 
+    /**
+     * 获取指定语言下的AndroidStrings
+     * @param xmlContentByte
+     * @return
+     */
     public static List<AndroidString> getAndroidStringsList(byte[] xmlContentByte) {
         try {
             String fileContent = new String(xmlContentByte, "UTF-8");

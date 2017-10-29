@@ -24,17 +24,19 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
+
+import org.jetbrains.annotations.Nullable;
+
+import java.io.IOException;
+import java.util.List;
+
 import data.Log;
 import data.StorageDataKey;
 import data.task.GetTranslationTask;
 import language_engine.TranslationEngineType;
 import module.AndroidString;
 import module.SupportedLanguages;
-import org.jetbrains.annotations.Nullable;
 import ui.MultiSelectDialog;
-
-import java.io.IOException;
-import java.util.List;
 
 /**
  * Created by Wesley Lin on 11/26/14.
@@ -48,7 +50,7 @@ public class ConvertToOtherLanguages extends AnAction implements MultiSelectDial
     private static final String OVERRIDE_EXITS_STRINGS = "Override the existing strings";
 
     private Project project;
-    private List<AndroidString> androidStringsInStringFile = null;
+    private List<AndroidString> androidStringsInSelectFile = null;
 
     public TranslationEngineType defaultTranslationEngine = TranslationEngineType.Bing;
 
@@ -60,20 +62,22 @@ public class ConvertToOtherLanguages extends AnAction implements MultiSelectDial
 
     @Override
     public void update(AnActionEvent e) {
-        final VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
+        final VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE) ;
 
         boolean isStringXML = isStringXML(file);
         e.getPresentation().setEnabled(isStringXML);
         e.getPresentation().setVisible(isStringXML);
     }
 
+
     public void actionPerformed(AnActionEvent e) {
-        project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+
+        project = e.getData(CommonDataKeys.PROJECT);
         if (project == null) {
             return;
         }
 
-        clickedFile = CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
+        clickedFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
         Log.i("clicked file: " + clickedFile.getPath());
 
         if (PropertiesComponent.getInstance().isValueSet(StorageDataKey.SettingLanguageEngine)) {
@@ -82,7 +86,7 @@ public class ConvertToOtherLanguages extends AnAction implements MultiSelectDial
         }
 
         try {
-            androidStringsInStringFile = AndroidString.getAndroidStringsList(clickedFile.contentsToByteArray());
+            androidStringsInSelectFile = AndroidString.getAndroidStringsList(clickedFile.contentsToByteArray());
         } catch (IOException e1) {
             e1.printStackTrace();
         }
@@ -91,7 +95,7 @@ public class ConvertToOtherLanguages extends AnAction implements MultiSelectDial
 //            Log.i("[" + (i + 1) + "]: " + androidStringsInStringFile.get(i).toString());
 //        }
 
-        if (androidStringsInStringFile == null || androidStringsInStringFile.isEmpty()) {
+        if (androidStringsInSelectFile == null || androidStringsInSelectFile.isEmpty()) {
             showErrorDialog(project, "Target file does not contain any strings.");
             return;
         }
@@ -117,12 +121,13 @@ public class ConvertToOtherLanguages extends AnAction implements MultiSelectDial
         List<SupportedLanguages> allData = SupportedLanguages.getAllSupportedLanguages(defaultTranslationEngine);
 
         for (SupportedLanguages language : allData) {
+            //选中的翻译引擎，是否包含要翻译的目标语言，保存起来
             propertiesComponent.setValue(StorageDataKey.SupportedLanguageCheckStatusPrefix + language.getLanguageCode(),
                     String.valueOf(selectedLanguages.contains(language)));
         }
 
         new GetTranslationTask(project, "Translation in progress, using " + defaultTranslationEngine.getDisplayName(),
-                selectedLanguages, androidStringsInStringFile, defaultTranslationEngine, overrideChecked, clickedFile)
+                selectedLanguages, androidStringsInSelectFile, defaultTranslationEngine, overrideChecked, clickedFile)
                 .setCancelText("Translation has been canceled").queue();
     }
 
