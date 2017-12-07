@@ -131,6 +131,7 @@ public class ConvertToOtherLanguages extends AnAction implements MultiSelectDial
             propertiesComponent.setValue(StorageDataKey.SupportedLanguageCheckStatusPrefix + language.getLanguageCode(),
                     String.valueOf(selectedLanguages.contains(language)));
         }
+        Log.i("Translation Engine: " + defaultTranslationEngine.toString());
 
         new GetTranslationTask(project, "Translation in progress, using " + defaultTranslationEngine.getDisplayName(),
                 selectedLanguages, androidStringsInSelectFile, defaultTranslationEngine, overrideChecked, selectedFile)

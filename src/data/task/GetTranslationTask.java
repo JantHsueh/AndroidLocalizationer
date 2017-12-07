@@ -64,6 +64,7 @@ public class GetTranslationTask extends Task.Backgroundable {
             "please check your data usage <html><a href=\"https://datamarket.azure.com/account/datasets\">here</a></html>";
 
     private static final String GoogleErrorUnknown = "Error, please check API key in the settings panel.";
+    private static final String NoTranslationString = "No strings to translate";
     private static final String GoogleDailyLimitError = "Daily Limit Exceeded, please note that Google Translation API " +
             "is a <html><a href=\"https://cloud.google.com/translate/v2/pricing\">paid service.</a></html>";
 
@@ -79,7 +80,7 @@ public class GetTranslationTask extends Task.Backgroundable {
         this.selectedLanguages = selectedLanguages;
         this.sourceAndroidStrings = androidStrings;
         this.translationEngineType = translationEngineType;
-        this.indicatorFractionFrame = 1.0d / (double)(this.selectedLanguages.size());
+        this.indicatorFractionFrame = 1.0d / (double) (this.selectedLanguages.size());
         this.override = override;
         this.clickedFile = clickedFile;
     }
@@ -96,15 +97,24 @@ public class GetTranslationTask extends Task.Backgroundable {
 
             List<AndroidString> translationAndroidStrings = new ArrayList<AndroidString>();
             for (int j = 0; j < filterAndSplitString.size(); j++) {
-                translationAndroidStrings.addAll(getTranslationEngineResult(
+
+
+                List<AndroidString> lList = getTranslationEngineResult(
                         filterAndSplitString.get(j),
                         language,
-                        SupportedLanguages.English,
+//                        SupportedLanguages.English,
+                        SupportedLanguages.Chinese_Simplified,
                         translationEngineType
-                ));
+                );
 
-                indicator.setFraction(indicatorFractionFrame * (double)(i)
-                        + indicatorFractionFrame / filterAndSplitString.size() * (double)(j));
+                if (lList == null) {
+                    break;
+                } else {
+                    translationAndroidStrings.addAll(lList);
+                }
+
+                indicator.setFraction(indicatorFractionFrame * (double) (i)
+                        + indicatorFractionFrame / filterAndSplitString.size() * (double) (j));
                 indicator.setText("Translating to " + language.getLanguageEnglishDisplayName()
                         + " (" + language.getLanguageDisplayName() + ")");
             }
@@ -126,6 +136,7 @@ public class GetTranslationTask extends Task.Backgroundable {
 
     /**
      * 获取对应语言的文件名称，例如values-en
+     *
      * @param language
      * @return
      */
@@ -139,6 +150,7 @@ public class GetTranslationTask extends Task.Backgroundable {
 
     /**
      * 使用选择的翻译引擎,进行翻译
+     *
      * @param needToTranslatedString
      * @param targetLanguageCode
      * @param sourceLanguageCode
@@ -153,6 +165,11 @@ public class GetTranslationTask extends Task.Backgroundable {
 
         List<String> querys = AndroidString.getAndroidStringValues(needToTranslatedString);
 //        Log.i(querys.toString());
+
+        if (querys.size() == 0) {
+            errorMsg = NoTranslationString;
+            return  null;
+        }
 
         List<String> result = null;
 
@@ -179,13 +196,13 @@ public class GetTranslationTask extends Task.Backgroundable {
                     errorMsg = GoogleDailyLimitError;
                     return null;
                 }
+                Log.i("查询结果，转为list: " + result.toString());
+
                 break;
         }
 
         List<AndroidString> translatedAndroidStrings = new ArrayList<AndroidString>();
 
-//        Log.i("needToTranslatedString.size(): " + needToTranslatedString.size(),
-//                "result.size(): " + result.size());
         for (int i = 0; i < needToTranslatedString.size(); i++) {
             translatedAndroidStrings.add(new AndroidString(
                     needToTranslatedString.get(i).getKey(), result.get(i)));
@@ -195,6 +212,7 @@ public class GetTranslationTask extends Task.Backgroundable {
 
     /**
      * 把需要翻译的字符串列表，切分为50个一组，避免一次请求过多
+     *
      * @param origin
      * @param engineType 翻译引擎，不同的引擎，一组的大小可能不一样
      * @return
@@ -231,14 +249,15 @@ public class GetTranslationTask extends Task.Backgroundable {
     /**
      * 过滤翻译的xml中的string
      * 这个规律规则是在settings中设置的，被过滤的string不翻译
+     *
      * @param origin
      * @param language
      * @param override
      * @return
      */
     private List<AndroidString> filterAndroidString(List<AndroidString> origin,
-                                                           SupportedLanguages language,
-                                                           boolean override) {
+                                                    SupportedLanguages language,
+                                                    boolean override) {
         List<AndroidString> result = new ArrayList<AndroidString>();
 
         VirtualFile targetStringFile = LocalFileSystem.getInstance().findFileByPath(
@@ -283,18 +302,19 @@ public class GetTranslationTask extends Task.Backgroundable {
 
     /**
      * 翻译后的结果，根据是否需要覆盖已经存在的string，返回最终结果。
-     * @param sourceAndroidStrings 源xml文件中的string
+     *
+     * @param sourceAndroidStrings     源xml文件中的string
      * @param translatedAndroidStrings 翻译后的string
-     * @param fileName 源xml文件
-     * @param override 是否覆盖
+     * @param fileName                 源xml文件
+     * @param override                 是否覆盖
      * @return
      */
     private static List<AndroidString> getTargetAndroidStrings(List<AndroidString> sourceAndroidStrings,
-                                                      List<AndroidString> translatedAndroidStrings,
-                                                      String fileName,
-                                                      boolean override) {
+                                                               List<AndroidString> translatedAndroidStrings,
+                                                               String fileName,
+                                                               boolean override) {
 
-        if(translatedAndroidStrings == null) {
+        if (translatedAndroidStrings == null) {
             translatedAndroidStrings = new ArrayList<AndroidString>();
         }
 
@@ -316,7 +336,7 @@ public class GetTranslationTask extends Task.Backgroundable {
 
         List<AndroidString> targetAndroidStrings = new ArrayList<AndroidString>();
 
-        for(int i = 0; i < sourceAndroidStrings.size(); i ++) {
+        for (int i = 0; i < sourceAndroidStrings.size(); i++) {
             AndroidString string = sourceAndroidStrings.get(i);
             AndroidString resultString = new AndroidString(string);
 
@@ -341,6 +361,7 @@ public class GetTranslationTask extends Task.Backgroundable {
     }
 
     private static void writeAndroidStringToLocal(final Project myProject, String filePath, List<AndroidString> fileContent) {
+        Log.i("写入翻译结果到文件", filePath);
         File file = new File(filePath);
         final VirtualFile virtualFile;
         boolean fileExits = true;
@@ -356,7 +377,9 @@ public class GetTranslationTask extends Task.Backgroundable {
             //writer.write(getFileContent(fileContent));
             //writer.close();
             FileOutputStream fos = new FileOutputStream(file.getAbsoluteFile());
-            OutputStreamWriter osw = new OutputStreamWriter(fos,"UTF-8");
+            OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8");
+//            Log.i("写入翻译结果到文件",filePath);
+
             osw.write(getFileContent(fileContent));
             osw.close();
             //Change by GodLikeThomas FIX: Appeared Messy code under windows --end;

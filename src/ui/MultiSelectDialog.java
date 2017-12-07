@@ -67,6 +67,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.text.html.HTMLEditorKit;
 
+import data.Log;
 import data.StorageDataKey;
 import language_engine.TranslationEngineType;
 import module.SupportedLanguages;
@@ -91,8 +92,8 @@ public class MultiSelectDialog extends DialogWrapper {
     private String myCheckboxText;
     private boolean myChecked;
 
-    private java.util.List<SupportedLanguages> data;
-    private java.util.List<SupportedLanguages> selectedLanguages = new ArrayList<SupportedLanguages>();
+    private List<SupportedLanguages> data;
+    private List<SupportedLanguages> selectedLanguages = new ArrayList<SupportedLanguages>();
     private OnOKClickedListener onOKClickedListener;
 
     public void setOnOKClickedListener(OnOKClickedListener onOKClickedListener) {
@@ -137,6 +138,7 @@ public class MultiSelectDialog extends DialogWrapper {
     protected void doOKAction() {
         super.doOKAction();
         if (onOKClickedListener != null) {
+            Log.i("selected Translation Languages: " + selectedLanguages.toString());
             onOKClickedListener.onClick(selectedLanguages, myCheckBox.isSelected());
         }
     }

@@ -17,17 +17,18 @@
 package language_engine.google;
 
 import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.IllegalFormatException;
 import java.util.List;
 
+import data.Log;
 import language_engine.HttpUtils;
 import module.SupportedLanguages;
 
@@ -57,11 +58,18 @@ public class GoogleTranslationApi {
         if (querys.isEmpty())
             return null;
         String query = "";
-        for (int i = 0; i < querys.size(); i++) {
-            query += (URLEncoder.encode(querys.get(i)));
-            if (i != querys.size() - 1) {
-                query += "%0A";
+        Log.i("querys: " + querys.toString());
+        try {
+
+            for (int i = 0; i < querys.size(); i++) {
+                query += (URLEncoder.encode(querys.get(i), "UTF-8"));
+//                query += querys.get(i);
+                if (i != querys.size() - 1) {
+                    query += "%0A";
+                }
             }
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
         }
 
         String url = null;
@@ -77,11 +85,13 @@ public class GoogleTranslationApi {
         if (url == null)
             return null;
 
+        Log.i("google translation url: " + url);
+
         String getResult = HttpUtils.doHttpGet(url);
 //        Log.i("do get result: " + getResult);
+        Log.i("google translation getResult: " + getResult);
 
         try {
-            JsonObject jsonObject = new JsonParser().parse(getResult).getAsJsonObject();
             //lJsonArray = [[["I am going to school\n","我要去上学\n",null,null,3],["Put back to watch TV","放回回家看电视",null,null,3]],null,"zh-CN"]
             JsonArray lJsonArray = new JsonParser().parse(getResult).getAsJsonArray();
 

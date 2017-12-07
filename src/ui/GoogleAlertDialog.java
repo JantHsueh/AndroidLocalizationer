@@ -23,16 +23,34 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.ui.UIUtil;
-import data.StorageDataKey;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Adjustable;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Desktop;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.BorderFactory;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollBar;
+import javax.swing.JScrollPane;
+import javax.swing.JTextPane;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingConstants;
+
+import data.StorageDataKey;
 
 /**
  * Created by Wesley Lin on 12/27/14.
