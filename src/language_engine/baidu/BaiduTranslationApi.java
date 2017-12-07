@@ -27,8 +27,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import module.SupportedLanguages;
-import util.HttpGet;
-import util.TransApi;
+import baiduUtil.HttpGet;
+import baiduUtil.TransApi;
 
 public class BaiduTranslationApi {
 

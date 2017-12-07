@@ -16,10 +16,10 @@
 
 package module;
 
-import language_engine.TranslationEngineType;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import language_engine.TranslationEngineType;
 
 /**
  * Created by Wesley Lin on 11/29/14.
@@ -36,8 +36,8 @@ public enum SupportedLanguages {
     Catalan("ca", "Català", "Catalan"),
     Chinese_Simplified("zh-CN", "简体中文", "Chinese Simplified"),
     Chinese_Simplified_BING("zh-CHS", "简体中文", "Chinese Simplified"),
-    Chinese_Traditional("zh-TW", "正體中文", "Chinese Traditional"),
-    Chinese_Traditional_BING("zh-CHT", "正體中文", "Chinese Traditional"),
+    Chinese_Traditional("zh-TW", "繁體中文", "Chinese Traditional"),
+    Chinese_Traditional_BING("zh-CHT", "繁體中文", "Chinese Traditional"),
     Croatian("hr", "Hrvatski", "Croatian"),
     Czech("cs", "Čeština", "Czech"),
     Danish("da", "Dansk", "Danish"),
