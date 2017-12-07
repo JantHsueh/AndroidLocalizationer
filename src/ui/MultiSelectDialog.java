@@ -30,22 +30,46 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
-import data.StorageDataKey;
-import language_engine.TranslationEngineType;
-import module.SupportedLanguages;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import javax.swing.plaf.basic.BasicHTML;
-import javax.swing.text.html.HTMLEditorKit;
-import java.awt.*;
+import java.awt.Adjustable;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.GridLayout;
+import java.awt.Insets;
+import java.awt.LayoutManager;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Window;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import javax.swing.Action;
+import javax.swing.BorderFactory;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JRootPane;
+import javax.swing.JScrollBar;
+import javax.swing.JScrollPane;
+import javax.swing.JTextPane;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import javax.swing.plaf.basic.BasicHTML;
+import javax.swing.text.html.HTMLEditorKit;
+
+import data.StorageDataKey;
+import language_engine.TranslationEngineType;
+import module.SupportedLanguages;
 
 /**
  * Created by Wesley Lin on 11/29/14.
@@ -60,7 +84,7 @@ public class MultiSelectDialog extends DialogWrapper {
     }
 
     private PropertiesComponent propertiesComponent;
-    protected String myMessage;
+    protected String mPrompt;
     private MyBorderLayout myLayout;
 
     private JCheckBox myCheckBox;
@@ -76,7 +100,7 @@ public class MultiSelectDialog extends DialogWrapper {
     }
 
     public MultiSelectDialog(@Nullable Project project,
-                             String message,
+                             String prompt,
                              String title,
                              @Nullable String checkboxText,
                              boolean checkboxStatus,
@@ -84,12 +108,12 @@ public class MultiSelectDialog extends DialogWrapper {
                              boolean canBeParent) {
         super(project, canBeParent);
         data = SupportedLanguages.getAllSupportedLanguages(translationEngineType);
-        _init(project, title, message, checkboxText, checkboxStatus, null);
+        _init(project, title, prompt, checkboxText, checkboxStatus, null);
     }
 
     protected void _init(Project project,
                          String title,
-                         String message,
+                         String prompt,
                          @Nullable String checkboxText,
                          boolean checkboxStatus,
                          @Nullable DoNotAskOption doNotAskOption) {
@@ -98,7 +122,7 @@ public class MultiSelectDialog extends DialogWrapper {
             setUndecorated(true);
         }
         propertiesComponent = PropertiesComponent.getInstance(project);
-        myMessage = message;
+        mPrompt = prompt;
         myCheckboxText = checkboxText;
         myChecked = checkboxStatus;
         setButtonsAlignment(SwingConstants.RIGHT);
@@ -224,12 +248,12 @@ public class MultiSelectDialog extends DialogWrapper {
     protected JComponent doCreateCenterPanel() {
         JPanel panel = new JPanel(new BorderLayout(15, 0));
 
-        if (myMessage != null) {
-            final JTextPane messageComponent = createMessageComponent(myMessage);
+        if (mPrompt != null) {
+            final JTextPane messageComponent = createMessageComponent(mPrompt);
 
             final Dimension screenSize = messageComponent.getToolkit().getScreenSize();
             final Dimension textSize = messageComponent.getPreferredSize();
-            if (myMessage.length() > 100) {
+            if (mPrompt.length() > 100) {
                 final JScrollPane pane = ScrollPaneFactory.createScrollPane(messageComponent);
                 pane.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
                 pane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);

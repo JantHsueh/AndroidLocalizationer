@@ -52,14 +52,18 @@ public class ConvertToOtherLanguages extends AnAction implements MultiSelectDial
     private Project project;
     private List<AndroidString> androidStringsInSelectFile = null;
 
-    public TranslationEngineType defaultTranslationEngine = TranslationEngineType.Bing;
+    public TranslationEngineType defaultTranslationEngine = TranslationEngineType.Google;
 
-    private VirtualFile clickedFile;
+    private VirtualFile selectedFile;
 
     public ConvertToOtherLanguages() {
         super("Convert to other languages", null, IconLoader.getIcon("/icons/globe.png"));
     }
 
+    /**
+     * 控制菜单选项是否可见
+     * @param e
+     */
     @Override
     public void update(AnActionEvent e) {
         final VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE) ;
@@ -69,7 +73,7 @@ public class ConvertToOtherLanguages extends AnAction implements MultiSelectDial
         e.getPresentation().setVisible(isStringXML);
     }
 
-
+    @Override
     public void actionPerformed(AnActionEvent e) {
 
         project = e.getData(CommonDataKeys.PROJECT);
@@ -77,16 +81,18 @@ public class ConvertToOtherLanguages extends AnAction implements MultiSelectDial
             return;
         }
 
-        clickedFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
-        Log.i("clicked file: " + clickedFile.getPath());
+        //获取点击的文件
+        selectedFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
+        Log.i("clicked file: " + selectedFile.getPath());
 
+        //PropertiesComponent 键值对，是否有保存的翻译引擎
         if (PropertiesComponent.getInstance().isValueSet(StorageDataKey.SettingLanguageEngine)) {
             defaultTranslationEngine = TranslationEngineType.fromName(
                     PropertiesComponent.getInstance().getValue(StorageDataKey.SettingLanguageEngine));
         }
 
         try {
-            androidStringsInSelectFile = AndroidString.getAndroidStringsList(clickedFile.contentsToByteArray());
+            androidStringsInSelectFile = AndroidString.getAndroidStringsList(selectedFile.contentsToByteArray());
         } catch (IOException e1) {
             e1.printStackTrace();
         }
@@ -127,7 +133,7 @@ public class ConvertToOtherLanguages extends AnAction implements MultiSelectDial
         }
 
         new GetTranslationTask(project, "Translation in progress, using " + defaultTranslationEngine.getDisplayName(),
-                selectedLanguages, androidStringsInSelectFile, defaultTranslationEngine, overrideChecked, clickedFile)
+                selectedLanguages, androidStringsInSelectFile, defaultTranslationEngine, overrideChecked, selectedFile)
                 .setCancelText("Translation has been canceled").queue();
     }
 
@@ -135,14 +141,21 @@ public class ConvertToOtherLanguages extends AnAction implements MultiSelectDial
         Messages.showErrorDialog(project, msg, "Error");
     }
 
+    /**
+     *
+     * @param file
+     * @return
+     */
     private static boolean isStringXML(@Nullable VirtualFile file) {
         if (file == null)
             return false;
 
         if (!file.getName().equals("strings.xml"))
+            //不包括strings.xml ，返回false
             return false;
 
         if (file.getParent() == null)
+            //没有上一级文件夹 ，返回返回false
             return false;
 
         // only show popup menu for English strings

@@ -52,7 +52,7 @@ import module.SupportedLanguages;
 public class GetTranslationTask extends Task.Backgroundable {
 
     private List<SupportedLanguages> selectedLanguages;
-    private final List<AndroidString> androidStrings;
+    private final List<AndroidString> sourceAndroidStrings;
     private double indicatorFractionFrame;
     private TranslationEngineType translationEngineType;
     private boolean override;
@@ -77,7 +77,7 @@ public class GetTranslationTask extends Task.Backgroundable {
                               VirtualFile clickedFile) {
         super(project, title);
         this.selectedLanguages = selectedLanguages;
-        this.androidStrings = androidStrings;
+        this.sourceAndroidStrings = androidStrings;
         this.translationEngineType = translationEngineType;
         this.indicatorFractionFrame = 1.0d / (double)(this.selectedLanguages.size());
         this.override = override;
@@ -92,11 +92,11 @@ public class GetTranslationTask extends Task.Backgroundable {
             SupportedLanguages language = selectedLanguages.get(i);
 
             List<List<AndroidString>> filterAndSplitString
-                    = splitAndroidString(filterAndroidString(androidStrings, language, override), translationEngineType);
+                    = splitAndroidString(filterAndroidString(sourceAndroidStrings, language, override), translationEngineType);
 
-            List<AndroidString> translationStrings = new ArrayList<AndroidString>();
+            List<AndroidString> translationAndroidStrings = new ArrayList<AndroidString>();
             for (int j = 0; j < filterAndSplitString.size(); j++) {
-                translationStrings.addAll(getTranslationEngineResult(
+                translationAndroidStrings.addAll(getTranslationEngineResult(
                         filterAndSplitString.get(j),
                         language,
                         SupportedLanguages.English,
@@ -109,8 +109,8 @@ public class GetTranslationTask extends Task.Backgroundable {
                         + " (" + language.getLanguageDisplayName() + ")");
             }
             //需要把翻译的结果写进文件名为fileName的xml中
-            String fileName = getValueResourcePath(language);
-            List<AndroidString> fileContent = getTargetAndroidStrings(androidStrings, translationStrings, fileName, override);
+            String fileName = getResourcePath(language);
+            List<AndroidString> fileContent = getTargetAndroidStrings(sourceAndroidStrings, translationAndroidStrings, fileName, override);
 
             writeAndroidStringToLocal(myProject, fileName, fileContent);
         }
@@ -129,7 +129,7 @@ public class GetTranslationTask extends Task.Backgroundable {
      * @param language
      * @return
      */
-    private String getValueResourcePath(SupportedLanguages language) {
+    private String getResourcePath(SupportedLanguages language) {
         String resPath = clickedFile.getPath().substring(0,
                 clickedFile.getPath().indexOf("/res/") + "/res/".length());
 
@@ -228,13 +228,21 @@ public class GetTranslationTask extends Task.Backgroundable {
         return splited;
     }
 
+    /**
+     * 过滤翻译的xml中的string
+     * 这个规律规则是在settings中设置的，被过滤的string不翻译
+     * @param origin
+     * @param language
+     * @param override
+     * @return
+     */
     private List<AndroidString> filterAndroidString(List<AndroidString> origin,
                                                            SupportedLanguages language,
                                                            boolean override) {
         List<AndroidString> result = new ArrayList<AndroidString>();
 
         VirtualFile targetStringFile = LocalFileSystem.getInstance().findFileByPath(
-                getValueResourcePath(language));
+                getResourcePath(language));
         List<AndroidString> targetAndroidStrings = new ArrayList<AndroidString>();
         if (targetStringFile != null) {
             try {
@@ -273,6 +281,14 @@ public class GetTranslationTask extends Task.Backgroundable {
         return result;
     }
 
+    /**
+     * 翻译后的结果，根据是否需要覆盖已经存在的string，返回最终结果。
+     * @param sourceAndroidStrings 源xml文件中的string
+     * @param translatedAndroidStrings 翻译后的string
+     * @param fileName 源xml文件
+     * @param override 是否覆盖
+     * @return
+     */
     private static List<AndroidString> getTargetAndroidStrings(List<AndroidString> sourceAndroidStrings,
                                                       List<AndroidString> translatedAndroidStrings,
                                                       String fileName,

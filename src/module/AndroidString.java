@@ -32,6 +32,7 @@ import javax.xml.stream.events.XMLEvent;
 
 /**
  * Created by Wesley Lin on 11/29/14.
+ * 属性和值
  */
 public class AndroidString {
     private String key;
@@ -132,7 +133,7 @@ public class AndroidString {
 
     /**
      * 获取指定语言下的AndroidStrings
-     * @param xmlContentByte
+     * @param xmlContentByte 文件里面的内容
      * @return
      */
     public static List<AndroidString> getAndroidStringsList(byte[] xmlContentByte) {
