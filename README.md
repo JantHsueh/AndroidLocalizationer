@@ -1,20 +1,20 @@
-#Android Localizationer
+# Android Localizationer
 
 This is a Android Studio/ IntelliJ IDEA plugin to localize your Android app, translate your string resources automactically.
 
 Translate all your strings in your string resources(e.g. `strings.xml`) to your target languages automactically. Help developers localize their Android app easily, with just one click.
 
 
-##Usage
+# Usage
 
 Right click the strings resource file, choose 'Convert to other languages'.<br>
-![img](https://raw.githubusercontent.com/westlinkin/AndroidLocalizationer/master/screen_shot_3.png)<br>
+![img](https://raw.githubusercontent.com/JantHsueh/AndroidLocalizationer/master/screen_shot_3.png)<br>
 Then check the target languages.<br>
-![img](https://raw.githubusercontent.com/westlinkin/AndroidLocalizationer/master/screen_shot_2.png) 
+![img](https://raw.githubusercontent.com/JantHsueh/AndroidLocalizationer/master/screen_shot_2.png) 
 <br>
 After clicking `OK`, the string resources will be translated and created in the correct value folder.
 
-##Feature
+# Feature
 
 * Filter the strings you don't wanna translate by adding `NAL_` prefix to the `string key`, case sensitive. Change:<br>
 `<string name="flurry_id">FLURRY_ID</string>`<br>
@@ -23,26 +23,33 @@ to<br>
 
 * Filter the strings you don't wanna translate by adding `filter rule` in plugin settings interface
 
+* With google translate, do not need to add a secret key
+
 * Set client id or client secret for Microsoft Translator, in case of running out of quota. 
 	* [How to get Microsoft Translator client id and client secret?](http://blogs.msdn.com/b/translation/p/gettingstarted1.aspx)
 	
-	![img](https://raw.githubusercontent.com/westlinkin/AndroidLocalizationer/master/screen_shot_5.png) 
+	![img](https://raw.githubusercontent.com/JantHsueh/AndroidLocalizationer/master/screen_shot_5.png) 
 	 
-* Set Google API key to use Google Translation API, you need to do [this](https://cloud.google.com/translate/v2/getting_started#intro), at the **Public API access** section of the **Credentials** page, create a new **`Browser key`**. Please **NOTE** that this is a [paid service](https://cloud.google.com/translate/v2/pricing).
 
-More features are coming, please check [Todo](https://github.com/westlinkin/AndroidLocalizationer#todo).
+More features are coming, please check [Todo](https://github.com/JantHsueh/AndroidLocalizationer#todo).
 
-##Warning
-* Currently, Android Localizationer only support translate **English** to other languages
+# Warning
+* Currently, Android Localizationer only support translate **Chinese** to other languages
 * The result may **not** meet your standards due to the Translation API that this plugin is using, so keep your string resources **as simple as possible**
+* Try to avoid using special symbols
 
 
-##Downloads
-You can download the plugin [here](https://github.com/westlinkin/AndroidLocalizationer/raw/master/AndroidLocalizationer.zip).
+# Downloads
+You can download the plugin [here](https://github.com/JantHsueh/AndroidLocalizationer/releases).
 
 To Install the plugin, please check [IntelliJ IDEA Web Help](https://www.jetbrains.com/idea/help/installing-updating-and-uninstalling-repository-plugins.html#d1282549e185).
 
-##ChangeLog
+# ChangeLog
+Version 0.1.6
+* With google translate, do not need to add a secret key
+* Default translation source language is Chinese
+* Fix install to AndroidStudio3.0 bug
+
 Version 0.1.5
 * Fix [issue #17](https://github.com/westlinkin/AndroidLocalizationer/issues/17)
 * Fix [issue #1](https://github.com/westlinkin/AndroidLocalizationer/issues/1)
@@ -92,7 +99,7 @@ Version 0.0.1
 * Publish project
 
 
-##Todo
+## Todo
 * Multiple translation engine
 * Plugin Settings
 	* <del>Choose the translation engine (translation API) you wanna use
@@ -103,7 +110,7 @@ Version 0.0.1
 * Support string arrays
 
 
-##License
+## License
 
 	Copyright 2014-2016 Wesley Lin
 
