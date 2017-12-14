@@ -63,10 +63,9 @@ public class GoogleTranslationApi {
 
             for (int i = 0; i < querys.size(); i++) {
                 query += (URLEncoder.encode(querys.get(i), "UTF-8"));
-//                query += querys.get(i);
-                if (i != querys.size() - 1) {
-                    query += "%0A";
-                }
+                query += "%0A";//换行
+//                if (i != querys.size() - 1) {
+//                }
             }
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
@@ -103,7 +102,15 @@ public class GoogleTranslationApi {
             for (int i = 0; i < size; i++) {
                 //["I am going to school\n","我要去上学\n",null,null,3]
                 JsonArray lJsonArrayOneString = lJsonArrayStrings.get(i).getAsJsonArray();
-                String translate = lJsonArrayOneString.get(0).toString().replace("\\n", "").replace("\"", "");
+//                String translate = lJsonArrayOneString.get(0).toString().replace("\\n", "").replace("\"", "");
+
+                String translate = lJsonArrayOneString.get(0).toString();
+                if (i == size - 1) {
+                    //最后一条翻译没有\n,所以要取第二位到倒数第二位
+                    translate = translate.substring(1, translate.length() - 1).replace("\\\"", "\"");
+                } else {
+                    translate = translate.substring(1, translate.length() - 3).replace("\\\"", "\"");
+                }
                 result.add(translate);
             }
             return result;

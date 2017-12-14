@@ -160,7 +160,7 @@ public class ConvertToOtherLanguages extends AnAction implements MultiSelectDial
             return false;
 
         // only show popup menu for English strings
-        if (!file.getParent().getName().equals("values") && !file.getParent().getName().startsWith("values-en"))
+        if (!file.getParent().getName().equals("values") && !file.getParent().getName().startsWith("values-zh"))
             return false;
 
         return true;

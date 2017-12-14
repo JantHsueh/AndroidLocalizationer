@@ -74,6 +74,7 @@ import module.SupportedLanguages;
 
 /**
  * Created by Wesley Lin on 11/29/14.
+ * 选择要翻译的语言，和是否覆盖翻译
  */
 public class MultiSelectDialog extends DialogWrapper {
 
