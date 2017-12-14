@@ -45,6 +45,10 @@ You can download the plugin [here](https://github.com/JantHsueh/AndroidLocalizat
 To Install the plugin, please check [IntelliJ IDEA Web Help](https://www.jetbrains.com/idea/help/installing-updating-and-uninstalling-repository-plugins.html#d1282549e185).
 
 # ChangeLog
+
+Version 0.1.7
+* Solved the problem of translation quotes
+
 Version 0.1.6
 * With google translate, do not need to add a secret key
 * Default translation source language is Chinese
