@@ -14,20 +14,32 @@
   ~ limitations under the License.
   -->
 
-<idea-plugin >
-  <id>com.westlinkin.androidLocalizationer</id>
-  <name>Android Localizationer</name>
-  <version>0.1.5</version>
-  <vendor email="westlinkin@gmail.com" >Wesley Lin</vendor>
+<idea-plugin>
+    <id>com.xuexuan.androidLocalizationer</id>
+    <name>Android Localizationer</name>
+    <version>0.1.7</version>
+    <vendor email="384324069@qq.com">xue xuan</vendor>
 
-  <description><![CDATA[
+    <description><![CDATA[
       Translate all your strings in your <b>string</b> resources(e.g. strings.xml) to your target languages automactically.<br>
       Help developers localize their Android app easily, with just one click.<br><br>
       Use multiple Translation APIs to translate <b>strings</b> into other languages.<br><br>
       See more at <a href="https://github.com/westlinkin/AndroidLocalizationer">GitHub Page</a>.
     ]]></description>
 
-  <change-notes><![CDATA[
+    <change-notes><![CDATA[
+      Version 0.1.7
+      <ul>
+        <li>Solved the problem of translation quotes</li>
+      </ul>
+
+      Version 0.1.6
+      <ul>
+        <li>With google translate, do not need to add a secret key</li>
+        <li>Default translation source language is Chinese</li>
+        <li>Fix install to AndroidStudio3.0 bug</li>
+      </ul>
+
       Version 0.1.5
       <ul>
         <li>Fix <a href="https://github.com/westlinkin/AndroidLocalizationer/issues/17">issue #17</a></li>
@@ -85,38 +97,40 @@
         <li>Publish project</li>
       </ul>
     ]]>
-  </change-notes>
+    </change-notes>
 
-  <!-- please see http://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges for description -->
-  <idea-version since-build="133"/>
+    <!-- please see http://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges for description -->
+    <idea-version since-build="133"/>
 
-  <!-- please see http://confluence.jetbrains.com/display/IDEADEV/Plugin+Compatibility+with+IntelliJ+Platform+Products
-       on how to target different products -->
-  <!-- uncomment to enable plugin in all products
-  <depends>com.intellij.modules.lang</depends>
-  -->
+    <!-- please see http://confluence.jetbrains.com/display/IDEADEV/Plugin+Compatibility+with+IntelliJ+Platform+Products
+         on how to target different products -->
+    <!-- uncomment to enable plugin in all products
+    <depends>com.intellij.modules.lang</depends>
+    -->
 
-  <extensions defaultExtensionNs="com.intellij">
-    <!-- Add your extensions here -->
-      <applicationConfigurable
-              instance="settings.SettingConfigurable"/>
-  </extensions>
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- Add your extensions here -->
+        <applicationConfigurable
+            instance="settings.SettingConfigurable"/>
+    </extensions>
 
-  <application-components>
-    <!-- Add your application components here -->
-  </application-components>
+    <application-components>
+        <!-- Add your application components here -->
+    </application-components>
 
-  <project-components>
-    <!-- Add your project components here -->
-  </project-components>
+    <project-components>
+        <!-- Add your project components here -->
+    </project-components>
 
-  <actions>
-    <action id="AL.Convert" class="action.ConvertToOtherLanguages" text="Convert to other languages"
-            description="Convert this strings.xml to other languages that can be used to localize your Android app.">
+    <actions>
+        <action id="AL.Convert" class="action.ConvertToOtherLanguages"
+                text="Convert to other languages"
+                description="Convert this strings.xml to other languages that can be used to localize your Android app.">
 
-      <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="EditSource" />
-    </action>
+            <add-to-group group-id="ProjectViewPopupMenu" anchor="after"
+                          relative-to-action="EditSource"/>
+        </action>
 
-  </actions>
+    </actions>
 
 </idea-plugin>
