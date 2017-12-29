@@ -16,22 +16,22 @@ After clicking `OK`, the string resources will be translated and created in the 
 
 # Feature
 
-* Filter the strings you don't wanna translate by adding `NAL_` prefix to the `string key`, case sensitive. Change:<br>
+1. Filter the strings you don't wanna translate by adding `NAL_` prefix to the `string key`, case sensitive. Change:<br>
 `<string name="flurry_id">FLURRY_ID</string>`<br>
 to<br>
 `<string name="NAL_flurry_id">FLURRY_ID</string>`
 
-* Filter the strings you don't wanna translate by adding `filter rule` in plugin settings interface
+2. Filter the strings you don't wanna translate by adding `filter rule` in plugin settings interface
 
-* With google translate, do not need to add a secret key
+3. With google translate, do not need to add a secret key
 
-* input from excel and output to excel
+4. input from excel and output to excel
  
-  select outputExcel checkbox，Export the selected language to excel.path is project res/values-xx.xls.
-  select inputExcel checkbox,Input the selected language from excel.path is must project res/values-xx.xls.
-  if select outputExcel or inputExcel, will not translate.
+ - select outputExcel checkbox，Export the selected language to excel.path is project res/values-xx.xls.
+ - select inputExcel checkbox,Input the selected language from excel.path is must project res/values-xx.xls.
+ - if select outputExcel or inputExcel, will not translate.
   
-* Set client id or client secret for Microsoft Translator, in case of running out of quota. 
+5. Set client id or client secret for Microsoft Translator, in case of running out of quota. 
 	* [How to get Microsoft Translator client id and client secret?](http://blogs.msdn.com/b/translation/p/gettingstarted1.aspx)
 	
 	![img](https://raw.githubusercontent.com/JantHsueh/AndroidLocalizationer/master/screen_shot_5.png) 
