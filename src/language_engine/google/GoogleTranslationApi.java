@@ -87,7 +87,6 @@ public class GoogleTranslationApi {
         Log.i("google translation url: " + url);
 
         String getResult = HttpUtils.doHttpGet(url);
-//        Log.i("do get result: " + getResult);
         Log.i("google translation getResult: " + getResult);
 
         try {
@@ -107,10 +106,15 @@ public class GoogleTranslationApi {
                 String translate = lJsonArrayOneString.get(0).toString();
                 if (i == size - 1) {
                     //最后一条翻译没有\n,所以要取第二位到倒数第二位
-                    translate = translate.substring(1, translate.length() - 1).replace("\\\"", "\"");
+                    translate = translate.substring(1, translate.length() - 1);
                 } else {
-                    translate = translate.substring(1, translate.length() - 3).replace("\\\"", "\"");
+                    translate = translate.substring(1, translate.length() - 3);
                 }
+                //去除双引号前的反斜杠，单引号前加入反斜杠，保留\n(\n 翻译为了 \\\\ n)
+                translate = translate
+                        .replace("\\\"", "\"")
+                        .replace("\'", "\\\'")
+                        .replace("\\\\ n", "\\n");
                 result.add(translate);
             }
             return result;

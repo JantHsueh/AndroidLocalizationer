@@ -82,18 +82,25 @@ public class MultiSelectDialog extends DialogWrapper {
     public static final double REVERSE_GOLDEN_RATIO = 1 - GOLDEN_RATIO;
 
     public interface OnOKClickedListener {
-        public void onClick(List<SupportedLanguages> selectedLanguages, boolean overrideChecked);
+        void onClick(List<SupportedLanguages> selectedLanguages, boolean overrideChecked, boolean inputChecked, boolean outputChecked);
     }
 
     private PropertiesComponent propertiesComponent;
     protected String mPrompt;
     private MyBorderLayout myLayout;
 
-    private JCheckBox myCheckBox;
-    private String myCheckboxText;
-    private boolean myChecked;
+    private JCheckBox overrideCheckBox;
+    private JCheckBox inputCheckBox;
+    private JCheckBox outputCheckBox;
+    private String overrideCheckboxText;
+    private String inputBoxText;
+    private String outputBoxText;
+    private boolean overrideCheckedStatus;
 
-    private List<SupportedLanguages> data;
+    /**
+     * 可以翻译的语种
+     */
+    private List<SupportedLanguages> translatableLanguage;
     private List<SupportedLanguages> selectedLanguages = new ArrayList<SupportedLanguages>();
     private OnOKClickedListener onOKClickedListener;
 
@@ -101,34 +108,40 @@ public class MultiSelectDialog extends DialogWrapper {
         this.onOKClickedListener = onOKClickedListener;
     }
 
+    /**
+     * @param project
+     * @param prompt                 提示
+     * @param title                  窗口标题
+     * @param overrideCheckBoxText   覆盖翻译选择框的标题
+     * @param overrideCheckboxStatus 覆盖翻译选择框的状态
+     * @param inputBoxText           导入box的标题
+     * @param outputBoxText          导出box的标题
+     * @param translationEngineType  翻译引擎的种类，默认是google翻译
+     * @param canBeParent
+     */
     public MultiSelectDialog(@Nullable Project project,
                              String prompt,
                              String title,
-                             @Nullable String checkboxText,
-                             boolean checkboxStatus,
+                             @Nullable String overrideCheckBoxText,
+                             boolean overrideCheckboxStatus,
+                             String inputBoxText,
+                             String outputBoxText,
                              TranslationEngineType translationEngineType,
                              boolean canBeParent) {
         super(project, canBeParent);
-        data = SupportedLanguages.getAllSupportedLanguages(translationEngineType);
-        _init(project, title, prompt, checkboxText, checkboxStatus, null);
-    }
-
-    protected void _init(Project project,
-                         String title,
-                         String prompt,
-                         @Nullable String checkboxText,
-                         boolean checkboxStatus,
-                         @Nullable DoNotAskOption doNotAskOption) {
+        translatableLanguage = SupportedLanguages.getAllSupportedLanguages(translationEngineType);
         setTitle(title);
         if (Messages.isMacSheetEmulation()) {
             setUndecorated(true);
         }
         propertiesComponent = PropertiesComponent.getInstance(project);
         mPrompt = prompt;
-        myCheckboxText = checkboxText;
-        myChecked = checkboxStatus;
+        overrideCheckboxText = overrideCheckBoxText;
+        overrideCheckedStatus = overrideCheckboxStatus;
+        this.inputBoxText = inputBoxText;
+        this.outputBoxText = outputBoxText;
         setButtonsAlignment(SwingConstants.RIGHT);
-        setDoNotAskOption(doNotAskOption);
+        setDoNotAskOption(null);
         init();
         if (Messages.isMacSheetEmulation()) {
             MacUtil.adjustFocusTraversal(myDisposable);
@@ -140,7 +153,10 @@ public class MultiSelectDialog extends DialogWrapper {
         super.doOKAction();
         if (onOKClickedListener != null) {
             Log.i("selected Translation Languages: " + selectedLanguages.toString());
-            onOKClickedListener.onClick(selectedLanguages, myCheckBox.isSelected());
+            onOKClickedListener.onClick(selectedLanguages,
+                    overrideCheckBox.isSelected(),
+                    inputCheckBox.isSelected(),
+                    outputCheckBox.isSelected());
         }
     }
 
@@ -263,7 +279,7 @@ public class MultiSelectDialog extends DialogWrapper {
                 pane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
                 final int scrollSize = (int) new JScrollBar(Adjustable.VERTICAL).getPreferredSize().getWidth() + 12;
                 final Dimension preferredSize =
-                        new Dimension(Math.min(textSize.width, (int)(screenSize.width * REVERSE_GOLDEN_RATIO)) + scrollSize,
+                        new Dimension(Math.min(textSize.width, (int) (screenSize.width * REVERSE_GOLDEN_RATIO)) + scrollSize,
                                 Math.min(textSize.height, screenSize.height / 3) + scrollSize);
                 pane.setPreferredSize(preferredSize);
                 panel.add(pane, BorderLayout.NORTH);
@@ -272,12 +288,12 @@ public class MultiSelectDialog extends DialogWrapper {
             }
         }
 
-        if (!data.isEmpty()) {
+        if (!translatableLanguage.isEmpty()) {
             Container container = new Container();
             int gridCol = 2;
-            int gridRow = (data.size() % gridCol == 0) ? data.size() / gridCol : data.size() / gridCol + 1;
+            int gridRow = (translatableLanguage.size() % gridCol == 0) ? translatableLanguage.size() / gridCol : translatableLanguage.size() / gridCol + 1;
             container.setLayout(new GridLayout(gridRow, gridCol));
-            for (final SupportedLanguages language : data) {
+            for (final SupportedLanguages language : translatableLanguage) {
                 JCheckBox checkbox = new JCheckBox(language.getLanguageEnglishDisplayName()
                         + " (" + language.getLanguageDisplayName() + ") ");
                 checkbox.addItemListener(new ItemListener() {
@@ -298,18 +314,27 @@ public class MultiSelectDialog extends DialogWrapper {
                         propertiesComponent.getBoolean(StorageDataKey.SupportedLanguageCheckStatusPrefix + language.getLanguageCode(), false));
                 container.add(checkbox);
             }
+
+            if (inputBoxText != null) {
+                inputCheckBox = new JCheckBox(inputBoxText);
+                container.add(inputCheckBox);
+
+            }
+
+            if (outputBoxText != null) {
+                outputCheckBox = new JCheckBox(outputBoxText);
+                container.add(outputCheckBox);
+
+            }
             panel.add(container, BorderLayout.CENTER);
         }
 
-        if (myCheckboxText != null) {
-
-            myCheckBox = new JCheckBox(myCheckboxText);
-            myCheckBox.setSelected(myChecked);
-            myCheckBox.setMargin(new Insets(2, -4, 0, 0));
-
-            panel.add(myCheckBox, BorderLayout.SOUTH);
+        if (overrideCheckboxText != null) {
+            overrideCheckBox = new JCheckBox(overrideCheckboxText);
+            overrideCheckBox.setSelected(overrideCheckedStatus);
+            overrideCheckBox.setMargin(new Insets(2, -4, 0, 0));
+            panel.add(overrideCheckBox, BorderLayout.SOUTH);
         }
-
         return panel;
     }
 
@@ -351,8 +376,7 @@ public class MultiSelectDialog extends DialogWrapper {
         if (UIUtil.isUnderNimbusLookAndFeel()) {
             messageComponent.setOpaque(false);
             messageComponent.setBackground(UIUtil.TRANSPARENT_COLOR);
-        }
-        else {
+        } else {
             messageComponent.setBackground(UIUtil.getOptionPaneBackground());
         }
 
@@ -376,7 +400,7 @@ public class MultiSelectDialog extends DialogWrapper {
             target.setSize(realSize);
 
             synchronized (target.getTreeLock()) {
-                int yShift = (int)((1 - myPhase) * target.getPreferredSize().height);
+                int yShift = (int) ((1 - myPhase) * target.getPreferredSize().height);
                 Component[] components = target.getComponents();
                 for (Component component : components) {
                     Point point = component.getLocation();

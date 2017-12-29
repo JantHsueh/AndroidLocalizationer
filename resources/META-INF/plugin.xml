@@ -17,7 +17,7 @@
 <idea-plugin>
     <id>com.xuexuan.androidLocalizationer</id>
     <name>Android Localizationer</name>
-    <version>0.1.7</version>
+    <version>0.1.8</version>
     <vendor email="384324069@qq.com">xue xuan</vendor>
 
     <description><![CDATA[
@@ -28,6 +28,13 @@
     ]]></description>
 
     <change-notes><![CDATA[
+
+      Version 0.1.8
+      <ul>
+        <li>add input and output to excel</li>
+        <li>Fix bug:Single quotation marks caused the problem. like: "I'm good man" in android display "I".fix "I'm good man" to "I\'m good man"</li>
+      </ul>
+
       Version 0.1.7
       <ul>
         <li>Solved the problem of translation quotes</li>

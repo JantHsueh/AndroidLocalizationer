@@ -24,16 +24,25 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.sargeraswang.util.ExcelUtil.ExcelLogs;
+import com.sargeraswang.util.ExcelUtil.ExcelUtil;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import action.ConvertToOtherLanguages;
 import data.Log;
@@ -43,6 +52,7 @@ import language_engine.TranslationEngineType;
 import language_engine.bing.BingTranslationApi;
 import language_engine.google.GoogleTranslationApi;
 import module.AndroidString;
+import module.ExcelString;
 import module.FilterRule;
 import module.SupportedLanguages;
 
@@ -56,6 +66,8 @@ public class GetTranslationTask extends Task.Backgroundable {
     private double indicatorFractionFrame;
     private TranslationEngineType translationEngineType;
     private boolean override;
+    private boolean inputChecked;
+    private boolean outputChecked;
     private VirtualFile clickedFile;
 
     private static final String BingIdInvalid = "Invalid client id or client secret, " +
@@ -70,11 +82,25 @@ public class GetTranslationTask extends Task.Backgroundable {
 
     private String errorMsg = null;
 
-    public GetTranslationTask(Project project, String title,
+    /**
+     * @param project
+     * @param title                 任务名称，将显示在idea的下方任务栏中
+     * @param selectedLanguages     需要翻译的语言
+     * @param androidStrings        需要翻译的string
+     * @param translationEngineType 翻译引擎，默认谷歌
+     * @param override              是否覆盖
+     * @param inputChecked          导入翻译
+     * @param outputChecked         导出翻译
+     * @param clickedFile           选中的文件
+     */
+    public GetTranslationTask(Project project,
+                              String title,
                               List<SupportedLanguages> selectedLanguages,
                               List<AndroidString> androidStrings,
                               TranslationEngineType translationEngineType,
                               boolean override,
+                              boolean inputChecked,
+                              boolean outputChecked,
                               VirtualFile clickedFile) {
         super(project, title);
         this.selectedLanguages = selectedLanguages;
@@ -82,47 +108,117 @@ public class GetTranslationTask extends Task.Backgroundable {
         this.translationEngineType = translationEngineType;
         this.indicatorFractionFrame = 1.0d / (double) (this.selectedLanguages.size());
         this.override = override;
+        this.inputChecked = inputChecked;
+        this.outputChecked = outputChecked;
         this.clickedFile = clickedFile;
     }
 
+    private static final String KEY = "Key";
+    private static final String SOURCE = "Source Language";
+    private static final String TARGET = "Target Language";
+
     @Override
     public void run(ProgressIndicator indicator) {
-        for (int i = 0; i < selectedLanguages.size(); i++) {
 
-            //需要翻译的目标语言
-            SupportedLanguages language = selectedLanguages.get(i);
+        if (outputChecked) {
+            //导出已经存在的翻译文件
+            Map<String, String> map = new LinkedHashMap<>();
+            map.put("a", KEY);
+            map.put("b", SOURCE);
+            map.put("c", TARGET);
 
-            List<List<AndroidString>> filterAndSplitString
-                    = splitAndroidString(filterAndroidString(sourceAndroidStrings, language, override), translationEngineType);
+            //导出指定语言的当前xml文件，不进行翻译
+            for (SupportedLanguages language : selectedLanguages) {
+                //获取选中的语种
 
-            List<AndroidString> translationAndroidStrings = new ArrayList<AndroidString>();
-            for (int j = 0; j < filterAndSplitString.size(); j++) {
+                //生成导出excel的路径
+                String excelFileName = getResourcePathExcel(language);
 
+                indicator.setText("save "+ language.getLanguageEnglishDisplayName() +"excle to" + excelFileName);
+                //获取目标语言的文件路径
+                String targetFileName = getResourcePath(language);
+                //获取目标语言和源文件中的string内容，并生成map
+                Collection<ExcelString> lExcelStringCollection = getTargetExcelStrings(sourceAndroidStrings, targetFileName);
+                //导出到execl
+                File f = new File(excelFileName);
 
-                List<AndroidString> lList = getTranslationEngineResult(
-                        filterAndSplitString.get(j),
-                        language,
-//                        SupportedLanguages.English,
-                        SupportedLanguages.Chinese_Simplified,
-                        translationEngineType
-                );
+                OutputStream out = null;
+                try {
+                    out = new FileOutputStream(f);
+                    ExcelUtil.exportExcel(map, lExcelStringCollection, out);
+                    out.close();
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
 
-                if (lList == null) {
-                    break;
-                } else {
-                    translationAndroidStrings.addAll(lList);
+        } else if (inputChecked) {
+            //从指定的xml文件中，导入选中的语言
+            for (int i = 0; i < selectedLanguages.size(); i++) {
+
+                //需要翻译的目标语言
+                SupportedLanguages language = selectedLanguages.get(i);
+                String excelFileName = getResourcePathExcel(language);
+                File f = new File(excelFileName);
+                InputStream inputStream = null;
+                List<AndroidString> translationAndroidStrings = new ArrayList<>();
+                try {
+                    inputStream = new FileInputStream(f);
+                    ExcelLogs logs = new ExcelLogs();
+                    Collection<Map> importExcel = ExcelUtil.importExcel(Map.class, inputStream, "yyyy/MM/dd HH:mm:ss", logs, 0);
+
+                    for (Map m : importExcel) {
+                        AndroidString a = new AndroidString();
+                        a.setKey(String.valueOf(m.get(KEY)));
+                        a.setValue(String.valueOf(m.get(TARGET)));
+                        translationAndroidStrings.add(a);
+                    }
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
                 }
 
-                indicator.setFraction(indicatorFractionFrame * (double) (i)
-                        + indicatorFractionFrame / filterAndSplitString.size() * (double) (j));
-                indicator.setText("Translating to " + language.getLanguageEnglishDisplayName()
-                        + " (" + language.getLanguageDisplayName() + ")");
+                //把翻译的结果写进文件名为fileName的xml中
+                String targetFileName = getResourcePath(language);
+                List<AndroidString> fileContent = getTargetAndroidStrings(sourceAndroidStrings, translationAndroidStrings, targetFileName, override);
+                writeAndroidStringToLocal(myProject, targetFileName, fileContent);
             }
-            //需要把翻译的结果写进文件名为fileName的xml中
-            String fileName = getResourcePath(language);
-            List<AndroidString> fileContent = getTargetAndroidStrings(sourceAndroidStrings, translationAndroidStrings, fileName, override);
 
-            writeAndroidStringToLocal(myProject, fileName, fileContent);
+        } else {
+            for (int i = 0; i < selectedLanguages.size(); i++) {
+
+                //需要翻译的目标语言
+                SupportedLanguages language = selectedLanguages.get(i);
+                List<List<AndroidString>> filterAndSplitString
+                        = splitAndroidString(filterAndroidString(sourceAndroidStrings, language, override), translationEngineType);
+                List<AndroidString> translationAndroidStrings = new ArrayList<AndroidString>();
+                for (int j = 0; j < filterAndSplitString.size(); j++) {
+                    List<AndroidString> lList = getTranslationEngineResult(
+                            filterAndSplitString.get(j),
+                            language,
+//                        SupportedLanguages.English,
+                            SupportedLanguages.Chinese_Simplified,
+                            translationEngineType
+                    );
+
+                    if (lList == null) {
+                        break;
+                    } else {
+                        translationAndroidStrings.addAll(lList);
+                    }
+
+                    //idea 的任务栏显示正在进行的任务
+                    indicator.setFraction(indicatorFractionFrame * (double) (i)
+                            + indicatorFractionFrame / filterAndSplitString.size() * (double) (j));
+                    indicator.setText("Translating to " + language.getLanguageEnglishDisplayName()
+                            + " (" + language.getLanguageDisplayName() + ")");
+                }
+                //把翻译的结果写进文件名为fileName的xml中
+                String targetFileName = getResourcePath(language);
+                List<AndroidString> fileContent = getTargetAndroidStrings(sourceAndroidStrings, translationAndroidStrings, targetFileName, override);
+                writeAndroidStringToLocal(myProject, targetFileName, fileContent);
+            }
         }
     }
 
@@ -135,7 +231,7 @@ public class GetTranslationTask extends Task.Backgroundable {
     }
 
     /**
-     * 获取对应语言的文件名称，例如values-en
+     * 生成对应语言的文件名称，例如values-en/string.xml
      *
      * @param language
      * @return
@@ -147,6 +243,20 @@ public class GetTranslationTask extends Task.Backgroundable {
         return resPath + "values-" + language.getAndroidStringFolderNameSuffix()
                 + "/" + clickedFile.getName();
     }
+
+    /**
+     * 导出翻译文件的路径，例如values-en.xls
+     *
+     * @param language
+     * @return
+     */
+    private String getResourcePathExcel(SupportedLanguages language) {
+        String resPath = clickedFile.getPath().substring(0,
+                clickedFile.getPath().indexOf("/res/") + "/res/".length());
+
+        return resPath + "values-" + language.getAndroidStringFolderNameSuffix() + ".xls";
+    }
+
 
     /**
      * 使用选择的翻译引擎,进行翻译
@@ -168,7 +278,7 @@ public class GetTranslationTask extends Task.Backgroundable {
 
         if (querys.size() == 0) {
             errorMsg = NoTranslationString;
-            return  null;
+            return null;
         }
 
         List<String> result = null;
@@ -302,10 +412,11 @@ public class GetTranslationTask extends Task.Backgroundable {
 
     /**
      * 翻译后的结果，根据是否需要覆盖已经存在的string，返回最终结果。
+     * 读取已经存在的目标文件，根据是否需要重写，来生成新的string map，最终写入新的文件
      *
      * @param sourceAndroidStrings     源xml文件中的string
      * @param translatedAndroidStrings 翻译后的string
-     * @param fileName                 源xml文件
+     * @param fileName                 目标xml文件
      * @param override                 是否覆盖
      * @return
      */
@@ -321,6 +432,7 @@ public class GetTranslationTask extends Task.Backgroundable {
         VirtualFile existenceFile = LocalFileSystem.getInstance().findFileByPath(fileName);
         List<AndroidString> existenceAndroidStrings = null;
         if (existenceFile != null && !override) {
+            //目标文件存在，且不需要覆盖，那么就需要读取已经存在的string，在保存的时候过滤这些文件
             try {
                 existenceAndroidStrings = AndroidString.getAndroidStringsList(existenceFile.contentsToByteArray());
             } catch (IOException e) {
@@ -337,8 +449,7 @@ public class GetTranslationTask extends Task.Backgroundable {
         List<AndroidString> targetAndroidStrings = new ArrayList<AndroidString>();
 
         for (int i = 0; i < sourceAndroidStrings.size(); i++) {
-            AndroidString string = sourceAndroidStrings.get(i);
-            AndroidString resultString = new AndroidString(string);
+            AndroidString resultString = sourceAndroidStrings.get(i);
 
             // if override is checked, skip setting the existence value, for performance issue
             if (!override) {
@@ -360,6 +471,72 @@ public class GetTranslationTask extends Task.Backgroundable {
         return targetAndroidStrings;
     }
 
+
+    /**
+     * 在源文件和翻译文件中找到相同key对应的值
+     * 以源文件为主，显示所有源文件的内容，如果对应的key，在翻译文件中没有，相应的翻译置空
+     *
+     * @param sourceAndroidStrings 源xml文件中的string
+     * @param targetFileName       目标xml文件
+     * @return
+     */
+    private static Collection<ExcelString> getTargetExcelStrings(List<AndroidString> sourceAndroidStrings,
+                                                                 String targetFileName) {
+
+
+        VirtualFile existenceFile = LocalFileSystem.getInstance().findFileByPath(targetFileName);
+        List<AndroidString> existenceAndroidStrings = null;
+        Collection<ExcelString> excelStringList = new ArrayList<ExcelString>();
+
+
+        if (existenceFile != null) {
+            //目标文件存在，且不需要覆盖，那么就需要读取已经存在的string，在保存的时候过滤这些文件
+            try {
+                existenceAndroidStrings = AndroidString.getAndroidStringsList(existenceFile.contentsToByteArray());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        Log.i("sourceAndroidStrings: " + sourceAndroidStrings,
+                "existenceAndroidStrings: " + existenceAndroidStrings);
+
+        if (existenceAndroidStrings == null || existenceAndroidStrings.size() == 0) {
+            return null;
+        }
+        for (AndroidString lAndroidString : sourceAndroidStrings) {
+
+            //xml中string 键值对的键
+            String key = lAndroidString.getKey();
+            //xml中string 键值对的值，这个值源文件中的
+            String sourceValue = lAndroidString.getValue();
+
+
+            //xml中string 键值对的值，这个值是翻译文件中的
+            String translatedValue = "";
+
+            for (AndroidString lAndroidString1 : existenceAndroidStrings) {
+                if (key.equals(lAndroidString1.getKey())) {
+                    translatedValue = lAndroidString1.getValue();
+                    break;
+                }
+            }
+
+            ExcelString lExcelString = new ExcelString(key, sourceValue, translatedValue);
+            excelStringList.add(lExcelString);
+        }
+
+        return excelStringList;
+    }
+
+
+    /**
+     * 把翻译的结果写进，指定的xml文件中
+     *
+     * @param myProject
+     * @param filePath    xml文件的路径  例如：values-en/string.xml
+     * @param fileContent xml所以string的内容
+     */
     private static void writeAndroidStringToLocal(final Project myProject, String filePath, List<AndroidString> fileContent) {
         Log.i("写入翻译结果到文件", filePath);
         File file = new File(filePath);
@@ -403,6 +580,12 @@ public class GetTranslationTask extends Task.Backgroundable {
         }
     }
 
+    /**
+     * 在idea中打开指定的文件
+     *
+     * @param myProject
+     * @param file      需要打开的文件
+     */
     private static void openFileInEditor(final Project myProject, @Nullable final VirtualFile file) {
         if (file == null)
             return;

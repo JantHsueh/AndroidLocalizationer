@@ -48,12 +48,21 @@ public class ConvertToOtherLanguages extends AnAction implements MultiSelectDial
             "The string resources are translated by %s, " +
             "try keeping your string resources simple, so that the result is more satisfied.";
     private static final String OVERRIDE_EXITS_STRINGS = "Override the existing strings";
+    private static final String INPUT_EXECL = "input excel";
+    private static final String OUTPUT_EXECL = "output excel";
 
     private Project project;
+
+    /**
+     * xml中的键值对 列表
+     */
     private List<AndroidString> androidStringsInSelectFile = null;
 
     public TranslationEngineType defaultTranslationEngine = TranslationEngineType.Google;
 
+    /**
+     * 选中的文件，右击的文件
+     */
     private VirtualFile selectedFile;
 
     public ConvertToOtherLanguages() {
@@ -62,11 +71,12 @@ public class ConvertToOtherLanguages extends AnAction implements MultiSelectDial
 
     /**
      * 控制菜单选项是否可见
+     *
      * @param e
      */
     @Override
     public void update(AnActionEvent e) {
-        final VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE) ;
+        final VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
 
         boolean isStringXML = isStringXML(file);
         e.getPresentation().setEnabled(isStringXML);
@@ -97,10 +107,6 @@ public class ConvertToOtherLanguages extends AnAction implements MultiSelectDial
             e1.printStackTrace();
         }
 
-//        for (int i = 0; i < androidStringsInStringFile.size(); i++) {
-//            Log.i("[" + (i + 1) + "]: " + androidStringsInStringFile.get(i).toString());
-//        }
-
         if (androidStringsInSelectFile == null || androidStringsInSelectFile.isEmpty()) {
             showErrorDialog(project, "Target file does not contain any strings.");
             return;
@@ -112,30 +118,49 @@ public class ConvertToOtherLanguages extends AnAction implements MultiSelectDial
                 LOCALIZATION_TITLE,
                 OVERRIDE_EXITS_STRINGS,
                 PropertiesComponent.getInstance(project).getBoolean(StorageDataKey.OverrideCheckBoxStatus, false),
+                INPUT_EXECL,
+                OUTPUT_EXECL,
                 defaultTranslationEngine,
                 false);
         multiSelectDialog.setOnOKClickedListener(this);
         multiSelectDialog.show();
     }
 
+    /**
+     * @param selectedLanguages
+     * @param overrideChecked   覆盖已经存在的翻译
+     * @param inputChecked      如果选中，1、不进行网络翻译 2、覆盖已存在的翻译
+     * @param outputChecked     如果选择  1、不进行网络翻译 2、导出选中的语言翻译到exel
+     */
     @Override
-    public void onClick(List<SupportedLanguages> selectedLanguages, boolean overrideChecked) {
+    public void onClick(List<SupportedLanguages> selectedLanguages,
+                        boolean overrideChecked,
+                        boolean inputChecked,
+                        boolean outputChecked) {
         // set consistence data
         PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(project);
         propertiesComponent.setValue(StorageDataKey.OverrideCheckBoxStatus, String.valueOf(overrideChecked));
 
-        List<SupportedLanguages> allData = SupportedLanguages.getAllSupportedLanguages(defaultTranslationEngine);
+        List<SupportedLanguages> supportLanguages = SupportedLanguages.getAllSupportedLanguages(defaultTranslationEngine);
 
-        for (SupportedLanguages language : allData) {
+        for (SupportedLanguages language : supportLanguages) {
             //选中的翻译引擎，是否包含要翻译的目标语言，保存起来
             propertiesComponent.setValue(StorageDataKey.SupportedLanguageCheckStatusPrefix + language.getLanguageCode(),
                     String.valueOf(selectedLanguages.contains(language)));
         }
         Log.i("Translation Engine: " + defaultTranslationEngine.toString());
 
+        //创建并开始翻译任务
         new GetTranslationTask(project, "Translation in progress, using " + defaultTranslationEngine.getDisplayName(),
-                selectedLanguages, androidStringsInSelectFile, defaultTranslationEngine, overrideChecked, selectedFile)
-                .setCancelText("Translation has been canceled").queue();
+                selectedLanguages,
+                androidStringsInSelectFile,
+                defaultTranslationEngine,
+                overrideChecked,
+                inputChecked,
+                outputChecked,
+                 selectedFile)
+             .setCancelText("Translation has been canceled")
+                .queue();
     }
 
     public static void showErrorDialog(Project project, String msg) {
@@ -143,7 +168,6 @@ public class ConvertToOtherLanguages extends AnAction implements MultiSelectDial
     }
 
     /**
-     *
      * @param file
      * @return
      */
