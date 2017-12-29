@@ -16,16 +16,22 @@ After clicking `OK`, the string resources will be translated and created in the 
 
 # Feature
 
-* Filter the strings you don't wanna translate by adding `NAL_` prefix to the `string key`, case sensitive. Change:<br>
+1. Filter the strings you don't wanna translate by adding `NAL_` prefix to the `string key`, case sensitive. Change:<br>
 `<string name="flurry_id">FLURRY_ID</string>`<br>
 to<br>
 `<string name="NAL_flurry_id">FLURRY_ID</string>`
 
-* Filter the strings you don't wanna translate by adding `filter rule` in plugin settings interface
+2. Filter the strings you don't wanna translate by adding `filter rule` in plugin settings interface
 
-* With google translate, do not need to add a secret key
+3. With google translate, do not need to add a secret key
 
-* Set client id or client secret for Microsoft Translator, in case of running out of quota. 
+4. input from excel and output to excel
+ 
+ - select outputExcel checkbox，Export the selected language to excel.path is project res/values-xx.xls.
+ - select inputExcel checkbox,Input the selected language from excel.path is must project res/values-xx.xls.
+ - if select outputExcel or inputExcel, will not translate.
+  
+5. Set client id or client secret for Microsoft Translator, in case of running out of quota. 
 	* [How to get Microsoft Translator client id and client secret?](http://blogs.msdn.com/b/translation/p/gettingstarted1.aspx)
 	
 	![img](https://raw.githubusercontent.com/JantHsueh/AndroidLocalizationer/master/screen_shot_5.png) 
@@ -45,6 +51,9 @@ You can download the plugin [here](https://github.com/JantHsueh/AndroidLocalizat
 To Install the plugin, please check [IntelliJ IDEA Web Help](https://www.jetbrains.com/idea/help/installing-updating-and-uninstalling-repository-plugins.html#d1282549e185).
 
 # ChangeLog
+Version 0.1.8
+* add input and output to excel
+* Fix bug:Single quotation marks caused the problem. like: "I'm good man" in android display "I".fix "I'm good man" to "I\'m good man"
 
 Version 0.1.7
 * Solved the problem of translation quotes
