@@ -213,6 +213,8 @@ public class GetTranslationTask extends Task.Backgroundable {
                             + indicatorFractionFrame / filterAndSplitString.size() * (double) (j));
                     indicator.setText("Translating to " + language.getLanguageEnglishDisplayName()
                             + " (" + language.getLanguageDisplayName() + ")");
+                    Log.i("Translating to : " + language.getLanguageEnglishDisplayName());
+
                 }
                 //把翻译的结果写进文件名为fileName的xml中
                 String targetFileName = getResourcePath(language);
@@ -274,7 +276,6 @@ public class GetTranslationTask extends Task.Backgroundable {
                                                            TranslationEngineType translationEngineType) {
 
         List<String> querys = AndroidString.getAndroidStringValues(needToTranslatedString);
-//        Log.i(querys.toString());
 
         if (querys.size() == 0) {
             errorMsg = NoTranslationString;
@@ -306,7 +307,7 @@ public class GetTranslationTask extends Task.Backgroundable {
                     errorMsg = GoogleDailyLimitError;
                     return null;
                 }
-                Log.i("查询结果，转为list: " + result.toString());
+                Log.i("query Result list: " + result.toString());
 
                 break;
         }
@@ -442,14 +443,16 @@ public class GetTranslationTask extends Task.Backgroundable {
             existenceAndroidStrings = new ArrayList<AndroidString>();
         }
 
-        Log.i("sourceAndroidStrings: " + sourceAndroidStrings,
-                "translatedAndroidStrings: " + translatedAndroidStrings,
-                "existenceAndroidStrings: " + existenceAndroidStrings);
+//        Log.i("sourceAndroidStrings: " + sourceAndroidStrings,
+//                "translatedAndroidStrings: " + translatedAndroidStrings,
+//                "existenceAndroidStrings: " + existenceAndroidStrings);
 
         List<AndroidString> targetAndroidStrings = new ArrayList<AndroidString>();
 
         for (int i = 0; i < sourceAndroidStrings.size(); i++) {
-            AndroidString resultString = sourceAndroidStrings.get(i);
+            //这里一定要先获得list里面的数据，然后在创建一个AndroidString
+            AndroidString lAndroidString = sourceAndroidStrings.get(i);
+            AndroidString resultString = new AndroidString(lAndroidString);
 
             // if override is checked, skip setting the existence value, for performance issue
             if (!override) {
@@ -467,7 +470,7 @@ public class GetTranslationTask extends Task.Backgroundable {
 
             targetAndroidStrings.add(resultString);
         }
-        Log.i("targetAndroidStrings: " + targetAndroidStrings);
+//        Log.i("targetAndroidStrings: " + targetAndroidStrings);
         return targetAndroidStrings;
     }
 
@@ -538,7 +541,7 @@ public class GetTranslationTask extends Task.Backgroundable {
      * @param fileContent xml所以string的内容
      */
     private static void writeAndroidStringToLocal(final Project myProject, String filePath, List<AndroidString> fileContent) {
-        Log.i("写入翻译结果到文件", filePath);
+        Log.i("write AndroidString To Local", filePath);
         File file = new File(filePath);
         final VirtualFile virtualFile;
         boolean fileExits = true;
